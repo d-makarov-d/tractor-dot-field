@@ -1,8 +1,11 @@
 from __future__ import annotations
+import io
+import sqlite3
+import numpy as np
 
 from abc import ABC, abstractmethod
 from typing import Iterable, Collection, Union
-import sqlite3
+
 
 def adapt_array(arr):
     out = io.BytesIO()
@@ -10,10 +13,12 @@ def adapt_array(arr):
     out.seek(0)
     return sqlite3.Binary(out.read())
 
+
 def convert_array(text):
     out = io.BytesIO(text)
     out.seek(0)
     return np.load(out)
+
 
 # Converts np.array to TEXT when inserting
 sqlite3.register_adapter(np.ndarray, adapt_array)
@@ -21,15 +26,17 @@ sqlite3.register_adapter(np.ndarray, adapt_array)
 # Converts TEXT to np.array when selecting
 sqlite3.register_converter("array", convert_array)
 
+
 class DBError(Exception):
     pass
 
 
 class DBModel(ABC):
     """Entity for operating with database in a specific file"""
+
     def __init__(self, filename: Union[str, sqlite3.Connection]):
         if isinstance(filename, str):
-            self.con = sqlite3.connect(filename)
+            self.con = sqlite3.connect(filename, detect_types=sqlite3.PARSE_DECLTYPES)
         else:
             self.con = filename
         # ensure, that db contains right tables
@@ -90,6 +97,7 @@ class DBModel(ABC):
 
 class TableDesr:
     """Describes table row fields"""
+
     def __init__(self, name: str, items: Collection[TableDesr.Field], _id: Union[None, TableDesr.Field]):
         self.name = name
         self.items = items
@@ -116,6 +124,7 @@ class TableDesr:
 
     class Field:
         """Table row field description"""
+
         def __init__(self, name: str, py_type, required=False, unique=False):
             if py_type not in self.py_to_sqlite_types().keys():
                 raise DBError('Unsupported type: %s for field %s' % (py_type, name))
@@ -142,6 +151,7 @@ class TableDesr:
 
 class DBInstance(ABC):
     """Represents table row entry"""
+
     @staticmethod
     @abstractmethod
     def table_descr() -> TableDesr:

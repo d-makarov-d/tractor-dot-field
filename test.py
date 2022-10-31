@@ -1,7 +1,11 @@
 import unittest
 import asyncio
+import numpy as np
+from numpy.testing import assert_array_equal
 
 from web import SiteTree
+
+from db.brick_item import BrickItem, BrickDB
 
 
 class Test(unittest.TestCase):
@@ -30,3 +34,12 @@ class Test(unittest.TestCase):
 
         res = asyncio.run(task())
         tree.close()
+
+
+class DBTest(unittest.TestCase):
+    def test_insert_brick_result(self):
+        db = BrickDB(":memory:")
+        bi = BrickItem("id1", "brick_name", 0.1, 0.1, 1, 0.1, 0.1, 0.1,
+                       np.array([1, 2, 3]), np.array([1, 2, 3]), np.array([1, 2, 3]), np.array([1, 2, 3]), np.array([1, 2, 3]))
+        db.save(bi)
+        assert_array_equal(db.find(BrickItem)[0]._mask_area, np.array([1, 2, 3]))

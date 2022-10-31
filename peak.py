@@ -4,8 +4,8 @@ class Peak:
         self.y = y
         self.n_points = n_points
         self.area = area
-        self._ra = ra
-        self._dec = dec
+        self.ra = ra
+        self.dec = dec
 
     def __str__(self):
-        return "Peak [ra: %.3f, dec: %.3f], points: %d, area: %.2f" % (self._ra, self._dec, self.n_points, self.area)
+        return "Peak [ra: %.3f, dec: %.3f], points: %d, area: %.2f" % (self.ra, self.dec, self.n_points, self.area)

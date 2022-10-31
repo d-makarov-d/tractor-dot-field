@@ -11,10 +11,12 @@ import matplotlib.image as mpimg
 from scipy.stats import gaussian_kde
 from scipy.ndimage import label
 from typing import Collection
+import uuid
 
 from brick import Brick
 from peak import Peak
 from web import SiteTree
+from db.brick_item import BrickDB, BrickItem
 
 
 threshold = 5
@@ -156,6 +158,7 @@ if __name__ == "__main__":
     dir = "data"
     fitses = [join(dir, f) for f in listdir(dir) if isfile(join(dir, f))]
     tree = SiteTree()
+    db = BrickDB("main_db.sqlite")
 
     for i, brick_name in enumerate(fitses):
         print(float(i)/len(fitses))
@@ -169,9 +172,15 @@ if __name__ == "__main__":
         if len(results) > 0:
             fname = re.sub("\.fits$", ".png", brick_name)
             fname = re.sub(r"^.+/", "out/", fname)
+            for r in results:
+                peak = r.peak
+                db.save(BrickItem(
+                    str(uuid.uuid4()), brick_name, peak.x, peak.y, peak.n_points, peak.area, peak.ra, peak.dec,
+                    r.x, r.y, r.Z, r._mask_inside, r.mask_area
+                ))
             # plt.savefig(fname, bbox_inches='tight')
-            fig = plt.figure()
-            asyncio.run(display_on_fig(fig, tree, brick_name, results))
-            plt.show()
+            #fig = plt.figure()
+            #asyncio.run(display_on_fig(fig, tree, brick_name, results))
+            #plt.show()
 
     tree.close()

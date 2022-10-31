@@ -6,6 +6,7 @@ from typing import Callable
 
 from concurrent.futures import ThreadPoolExecutor
 
+
 class SiteTree:
     def __init__(self, proxy: str = None, root_url: str = None):
         if proxy is None:
@@ -14,7 +15,7 @@ class SiteTree:
             self._http = urllib3.ProxyManager(proxy)
 
         if root_url is None:
-            self.root_url = "https://portal.nersc.gov/cfs/cosmo/data/legacysurvey/dr9/south/"
+            self.root_url = "https://portal.nersc.gov/cfs/cosmo/data/legacysurvey/dr9/north/"
 
         self._pool = ThreadPoolExecutor(500)
 
@@ -30,8 +31,9 @@ class SiteTree:
 
         loop = asyncio.get_event_loop()
         fut = loop.create_future()
+
         def cb(f):
-            res:urllib3.HTTPResponse = f.result()
+            res: urllib3.HTTPResponse = f.result()
             if res.status != 200:
                 raise IOError(f"Can not open url {url}: {res.status}")
 
@@ -40,6 +42,7 @@ class SiteTree:
             # first reference is to parent directory
             paths.pop(0)
             loop.call_soon_threadsafe(lambda: fut.set_result(paths))
+
         task.add_done_callback(cb)
         return await fut
 
@@ -53,6 +56,7 @@ class SiteTree:
 
         loop = asyncio.get_event_loop()
         fut = loop.create_future()
+
         def cb(f):
             chunk_size = 1024
             res: urllib3.HTTPResponse = f.result()
@@ -75,7 +79,6 @@ class SiteTree:
         task.add_done_callback(cb)
 
         return await fut
-
 
     def close(self):
         self._http.clear()

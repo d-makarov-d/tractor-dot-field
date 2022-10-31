@@ -3,3 +3,4 @@ data
 out
 .idea
 __pycache__
+main_db.sqlite
