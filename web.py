@@ -2,6 +2,8 @@ import asyncio
 import re
 import urllib3
 import os
+import tempfile
+import shutil
 from typing import Callable
 
 from concurrent.futures import ThreadPoolExecutor
@@ -54,6 +56,8 @@ class SiteTree:
         folders = re.sub('/.+?$', '', out_file)
         os.makedirs(folders, exist_ok=True)
 
+        tmp_file = tempfile.NamedTemporaryFile().name
+
         loop = asyncio.get_event_loop()
         fut = loop.create_future()
 
@@ -63,7 +67,7 @@ class SiteTree:
             if res.status != 200:
                 raise IOError(f"Can not open url {url}: {res.status}")
 
-            with open(out_file, 'wb') as out:
+            with open(tmp_file, 'wb') as out:
                 size = float(res.length_remaining)
                 while True:
                     data = res.read(chunk_size)
@@ -72,6 +76,7 @@ class SiteTree:
                     if progress is not None:
                         progress(1 - res.length_remaining / size)
                     out.write(data)
+            shutil.copyfile(tmp_file, out_file)
 
             res.release_conn()
             loop.call_soon_threadsafe(lambda: fut.set_result(True))
