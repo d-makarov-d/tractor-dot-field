@@ -67,6 +67,13 @@ class DBModel(ABC):
             self.con.execute(data.table_descr().insert_str, data.to_tuple())
         self.con.commit()
 
+    def update(self, data: DBInstance):
+        columns = data.to_tuple()
+        # rotate tuple representation, so that the id goes last
+        columns = columns[1:] + (columns[0],)
+        self.con.cursor().execute(data.table_descr().update_str, columns)
+        self.con.commit()
+
     def find(self, item_t: DBInstance.__class__, query: str = None) -> list[DBInstance]:
         descr = item_t.table_descr()
         if descr.name not in tuple(map(lambda el: el.name, self.schema)):
@@ -121,6 +128,17 @@ class TableDesr:
         if self._id is not None:
             n_values += 1
         return 'INSERT INTO %s VALUES(%s);' % (self.name, (n_values * '?,')[:-1])
+
+    @property
+    def update_str(self) -> str:
+        query = "UPDATE %s\nSET\n" % self.name
+        for itm in self.items:
+            query += "\t%s = ?,\n" % itm.name
+        query = query[:-2] + "\n"
+        if self._id is not None:
+            query += "WHERE %s = ?" % self._id.name
+
+        return query
 
     class Field:
         """Table row field description"""

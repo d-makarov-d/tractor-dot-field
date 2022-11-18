@@ -19,8 +19,10 @@ class BrickItem(DBInstance):
     )
 
     def __init__(self, id: str, brick_name: str, peak_x: float, peak_y: float, n_points: int, area: float,
-                ra: float, dec: float, x: np.ndarray, y: np.ndarray, Z: np.ndarray, mask_inside: np.ndarray,
-                mask_area: np.ndarray, status: str = None):
+                 ra: float, dec: float, x: np.ndarray, y: np.ndarray, Z: np.ndarray, mask_inside: np.ndarray,
+                 mask_area: np.ndarray,
+                 flux_g: np.ndarray, flux_z: np.ndarray, flux_r: np.ndarray,
+                 status: str = None):
         self._id = id
         self._brick_name = brick_name
         self._peak_x = peak_x
@@ -34,9 +36,12 @@ class BrickItem(DBInstance):
         self._Z = Z
         self._mask_inside = mask_inside
         self._mask_area = mask_area
+        self.flux_g = flux_g
+        self.flux_z = flux_z
+        self.flux_r = flux_r
         if status is not None and status not in self.STATUSES:
             raise ValueError("Status must be on of %s, got %s" % (self.STATUSES, status))
-        self._status = status or self.STATUSES[0]
+        self.status = status or self.STATUSES[0]
 
     @staticmethod
     def from_db(data: tuple) -> BrickItem:
@@ -57,7 +62,10 @@ class BrickItem(DBInstance):
             self._Z,
             self._mask_inside,
             self._mask_area,
-            self._status
+            self.flux_g,
+            self.flux_z,
+            self.flux_r,
+            self.status
         )
 
     @staticmethod
@@ -75,6 +83,9 @@ class BrickItem(DBInstance):
             TableDesr.Field('Z', np.ndarray),
             TableDesr.Field('mask_inside', np.ndarray),
             TableDesr.Field('mask_area', np.ndarray),
+            TableDesr.Field('flux_g', np.ndarray),
+            TableDesr.Field('flux_z', np.ndarray),
+            TableDesr.Field('flux_r', np.ndarray),
             TableDesr.Field('status', str),
         ]
         _id = TableDesr.Field('id', str)

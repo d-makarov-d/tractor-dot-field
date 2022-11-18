@@ -24,11 +24,15 @@ threshold = 5
 
 class BrickResult:
     """Result of brick pick analysis"""
-    def __init__(self, peak: Peak, x: np.ndarray, y: np.ndarray, Z: np.ndarray, mask_inside: np.ndarray, mask_area: np.ndarray):
+    def __init__(self, peak: Peak, x: np.ndarray, y: np.ndarray, Z: np.ndarray, mask_inside: np.ndarray, mask_area: np.ndarray,
+                 flux_g: np.ndarray, flux_z: np.ndarray, flux_r: np.ndarray):
         self.peak = peak
         self.x = x
         self.y = y
         self.Z = Z
+        self.flux_g = flux_g
+        self.flux_z = flux_z
+        self.flux_r = flux_r
         self._mask_inside = mask_inside
         self.mask_area = mask_area
 
@@ -50,8 +54,8 @@ def find_peaks(brick: Brick, points_x=300, points_y=300, sigma=3.0) -> list[Bric
     :return: Peaks
     """
     # REX type objects coordinates inside the brick
-    x, y = brick.get_points(type='REX')
-    ra, dec = brick.get_skycoords(type='REX')
+    x, y = brick.get_points(type=['REX', 'PSF'])
+    ra, dec = brick.get_skycoords(type=['REX', 'PSF'])
     # make grid, on which we will search for peaks
     X, Y = np.meshgrid(np.linspace(min(x),max(x), points_x), np.linspace(min(y),max(y), points_y))
     # compute probability density estimates in the grid nodes
@@ -101,7 +105,8 @@ def find_peaks(brick: Brick, points_x=300, points_y=300, sigma=3.0) -> list[Bric
         ra_avg = np.mean(ra[mask_points_inside])
         dec_avg = np.mean(dec[mask_points_inside])
         peak = Peak(center_x, center_y, np.count_nonzero(mask_points_inside), area_s, ra_avg, dec_avg)
-        results.append(BrickResult(peak, x, y, Z, mask_points_inside, mask_meaningful))
+        f_g, f_z, f_r = brick.get_flux(type=['REX', 'PSF'])
+        results.append(BrickResult(peak, x, y, Z, mask_points_inside, mask_meaningful, f_g[mask_points_inside], f_z[mask_points_inside], f_r[mask_points_inside]))
 
     return results
 
@@ -165,8 +170,9 @@ if __name__ == "__main__":
         try:
             brick = decode_fits(brick_name)
         except Exception:
-            continue
             print("!!!")
+            continue
+        import functools
         results = find_peaks(brick)
 
         if len(results) > 0:
@@ -176,7 +182,8 @@ if __name__ == "__main__":
                 peak = r.peak
                 db.save(BrickItem(
                     str(uuid.uuid4()), brick_name, peak.x, peak.y, peak.n_points, peak.area, peak.ra, peak.dec,
-                    r.x, r.y, r.Z, r._mask_inside, r.mask_area
+                    r.x, r.y, r.Z, r._mask_inside, r.mask_area,
+                    r.flux_g, r.flux_z, r.flux_r
                 ))
             # plt.savefig(fname, bbox_inches='tight')
             #fig = plt.figure()

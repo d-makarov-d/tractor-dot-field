@@ -40,6 +40,7 @@ class DBTest(unittest.TestCase):
     def test_insert_brick_result(self):
         db = BrickDB(":memory:")
         bi = BrickItem("id1", "brick_name", 0.1, 0.1, 1, 0.1, 0.1, 0.1,
-                       np.array([1, 2, 3]), np.array([1, 2, 3]), np.array([1, 2, 3]), np.array([1, 2, 3]), np.array([1, 2, 3]))
+                       np.array([1, 2, 3]), np.array([1, 2, 3]), np.array([1, 2, 3]), np.array([1, 2, 3]), np.array([1, 2, 3]),
+                       np.array([1, 2, 3]), np.array([1, 2, 3]) , np.array([1, 2, 3]))
         db.save(bi)
         assert_array_equal(db.find(BrickItem)[0]._mask_area, np.array([1, 2, 3]))

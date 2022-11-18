@@ -1,6 +1,7 @@
 import numpy as np
 from astropy.io.fits.hdu.table import FITS_rec
 from astropy.io.fits.hdu.base import Header
+from typing import Collection
 
 """Class, holding data, read from brick"""
 class Brick:
@@ -21,7 +22,7 @@ class Brick:
         self._flux_ivar_r: np.ndarray = data['FLUX_IVAR_R']
         self._flux_ivar_z: np.ndarray = data['FLUX_IVAR_Z']
 
-    def get_points(self, type: str = None) -> tuple[np.ndarray, np.ndarray]:
+    def get_points(self, type: Collection[str] = None) -> tuple[np.ndarray, np.ndarray]:
         """
         Return coordinates of points inside the brick
         :param type: Type of points, all are returned if type is None
@@ -32,10 +33,10 @@ class Brick:
         if type is None:
             return (self._bx, self._by)
 
-        mask = self._type == type
+        mask = np.array(list(map(lambda x: x in type, self._type)))
         return (self._bx[mask], self._by[mask])
 
-    def get_skycoords(self, type: str = None) -> tuple[np.ndarray, np.ndarray]:
+    def get_skycoords(self, type: Collection[str] = None) -> tuple[np.ndarray, np.ndarray]:
         """
         Return coordinates of points on the sky
         :param type: Type of points, all are returned if type is None
@@ -46,5 +47,9 @@ class Brick:
         if type is None:
             return (self._ra, self._dec)
 
-        mask = self._type == type
+        mask = np.array(list(map(lambda x: x in type, self._type)))
         return (self._ra[mask], self._dec[mask])
+
+    def get_flux(self, type: Collection[str]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        mask = np.array(list(map(lambda x: x in type, self._type)))
+        return (self._flux_g[mask], self._flux_z[mask], self._flux_r[mask])
