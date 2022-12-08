@@ -49,7 +49,7 @@ class SiteTree:
         return await fut
 
     async def download(self, path: str, out_file: str, progress: Callable[[float], None] = None) -> bool:
-        url = f"{self.root_url}{path}"
+        url = path if "://" in path else f"{self.root_url}{path}"
         task = self._pool.submit(lambda: self._http.request('GET', url, preload_content=False))
 
         # ensure output folder exists

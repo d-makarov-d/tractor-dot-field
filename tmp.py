@@ -1,29 +1,51 @@
-x, y = brick.get_points(type='REX')
-x_all, y_all = brick.get_points()
+import re
+from astropy.io import fits
+from astropy.io.fits.hdu.table import FITS_rec
 
-kernel = gaussian_kde(np.vstack([x, y]))
-kernel_all = gaussian_kde(np.vstack([x_all, y_all]))
+from web import SiteTree
+import asyncio
 
-X, Y = np.mgrid[x.min():x.max():200j, y.min():y.max():200j]
-positions = np.vstack([X.ravel(), Y.ravel()])
+names = []
+with open('human_picked.dat') as f:
+    for l in f.readlines()[2:]:
+        columns = l.split('|')
+        columns = list(map(lambda x: x.strip(), columns))
+        name = columns[13]
+        if name != "-":
+            names.append(name)
 
-Z = np.reshape(kernel(positions).T, X.shape)
-Z_all = np.reshape(kernel_all(positions).T, X.shape)
+print("read %d names" % len(names))
 
-plt.subplot(221)
-plt.title('type REX')
-plt.imshow(np.rot90(Z), cmap='seismic', extent=[x.min(), x.max(), y.min(), y.max()])
-plt.colorbar(location='bottom')
-plt.subplot(222)
-plt.title('type ALL')
-plt.imshow(np.rot90(Z_all), cmap='seismic', extent=[x.min(), x.max(), y.min(), y.max()])
-plt.colorbar(location='bottom')
-plt.subplot(223)
-plt.title('type REX')
-plt.scatter(x, y, alpha=0.1, c='r')
-plt.gca().set_box_aspect(1)
-plt.subplot(224)
-plt.title('type ALL')
-plt.scatter(x_all, y_all, alpha=0.1, c='r')
-plt.gca().set_box_aspect(1)
-plt.show()
+tree = SiteTree()
+
+
+def extract_coords(s: str) -> tuple[str, str]:
+    match = re.match(r"(\d{4})\w(\d{3})", s)
+    return match.group(1), match.group(2)
+
+
+def form_path(s: str, sky_part) -> str:
+    lon, lat = extract_coords(s)
+    return f"https://portal.nersc.gov/cfs/cosmo/data/legacysurvey/dr9/{sky_part}/tractor/{lon[:3]}/tractor-{s}.fits"
+
+
+async def process_fits(url: str, name: str):
+    file_name = f"data/{name}.fits"
+    await tree.download(url, file_name)
+    with fits.open(file_name, mode='update') as hdul:
+        header = hdul[0].header
+        data = hdul[1].data
+        if not isinstance(data, FITS_rec):
+            raise ValueError(f"Fits file {file_name} must be a table")
+        header['url'] = url
+        hdul.flush()
+
+
+async def task(urls):
+    tasks = [process_fits(url, name) for url, name in zip(urls, names)]
+    tasks = [asyncio.create_task(task) for task in tasks]
+    await asyncio.wait(tasks)
+
+urls = [form_path(x, 'north') for x in names]
+
+asyncio.run(task(urls))

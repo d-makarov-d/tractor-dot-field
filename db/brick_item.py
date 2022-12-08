@@ -18,12 +18,13 @@ class BrickItem(DBInstance):
         "bad"
     )
 
-    def __init__(self, id: str, brick_name: str, peak_x: float, peak_y: float, n_points: int, area: float,
+    def __init__(self, id: str, url: str, brick_name: str, peak_x: float, peak_y: float, n_points: int, area: float,
                  ra: float, dec: float, x: np.ndarray, y: np.ndarray, Z: np.ndarray, mask_inside: np.ndarray,
                  mask_area: np.ndarray,
                  flux_g: np.ndarray, flux_z: np.ndarray, flux_r: np.ndarray,
                  status: str = None):
         self._id = id
+        self._url = url
         self._brick_name = brick_name
         self._peak_x = peak_x
         self._peak_y = peak_y
@@ -50,6 +51,7 @@ class BrickItem(DBInstance):
     def to_tuple(self) -> tuple:
         return (
             self._id,
+            self._url,
             self._brick_name,
             self._peak_x,
             self._peak_y,
@@ -71,6 +73,7 @@ class BrickItem(DBInstance):
     @staticmethod
     def table_descr() -> TableDesr:
         fields = [
+            TableDesr.Field('url', str),
             TableDesr.Field('brick_name', str),
             TableDesr.Field('peak_x', float),
             TableDesr.Field('peak_y', float),

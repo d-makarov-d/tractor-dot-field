@@ -7,6 +7,7 @@ from typing import Collection
 class Brick:
     def __init__(self, header: Header, data: FITS_rec):
         self._brickid: int = header['BRICKID']
+        self.url = header['url']
         self._release: np.ndarray = data['RELEASE']
         self._brickname: np.chararray = data['BRICKNAME']
         self._objid: np.ndarray = data['OBJID']

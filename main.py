@@ -172,7 +172,6 @@ if __name__ == "__main__":
         except Exception:
             print("!!!")
             continue
-        import functools
         results = find_peaks(brick)
 
         if len(results) > 0:
@@ -181,7 +180,8 @@ if __name__ == "__main__":
             for r in results:
                 peak = r.peak
                 db.save(BrickItem(
-                    str(uuid.uuid4()), brick_name, peak.x, peak.y, peak.n_points, peak.area, peak.ra, peak.dec,
+                    str(uuid.uuid4()), brick.url, brick_name,
+                    peak.x, peak.y, peak.n_points, peak.area, peak.ra, peak.dec,
                     r.x, r.y, r.Z, r._mask_inside, r.mask_area,
                     r.flux_g, r.flux_z, r.flux_r
                 ))

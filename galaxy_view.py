@@ -285,9 +285,9 @@ class GalaxyViewViewModel:
         # download image of the sky
         self._picture: np.ndarray = None
         self._img_path = re.sub(
-            r"^.+/tractor-(\d{3})(\dp\d+).+$",
-            r"coadd/\g<1>/\g<1>\g<2>/legacysurvey-\g<1>\g<2>-image.jpg",
-            brick_name
+            r"/tractor/.+/tractor-(\d{3})(\d[pm]\d+).+$",
+            r"/coadd/\g<1>/\g<1>\g<2>/legacysurvey-\g<1>\g<2>-image.jpg",
+            item._url
         )
         self._img_file = re.sub(r"^(.+\.).+$", r"\g<1>jpg", brick_name)
 
