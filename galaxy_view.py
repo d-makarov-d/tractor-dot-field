@@ -91,7 +91,6 @@ class GalaxyView:
         self.vm = None
         try:
             self.vm, i, n_items = db_iter.next_by_status(0, BrickItem.STATUSES[0], tree)
-            self._ax_main.set_title("%i/%i" % (i, n_items))
         except IndexError:
             self._ax_main.set_title("Empty")
 
@@ -116,7 +115,8 @@ class GalaxyView:
         ax_radio = plt.subplot2grid((24, 6), (18, 0), colspan=2, rowspan=4, fig=self._fig, aspect='equal')
         ax_radio.axis('off')
         sample_keys = list(self._smples.keys())
-        self.radio_btns = RadioButtons(ax_radio, self._smples.values(), sample_keys.index(self.vm.selection_sample))
+        selection = sample_keys.index(self.vm.selection_sample) if self.vm is not None else None
+        self.radio_btns = RadioButtons(ax_radio, self._smples.values(), selection)
         self.radio_btns.on_clicked(self._on_type_selected)
 
         ax_points_title = plt.subplot2grid((24, 6), (18, 2), colspan=8, fig=self._fig)
@@ -163,6 +163,8 @@ class GalaxyView:
 
         self._pic_download = 0.0
         self._pic = None
+
+        self._update_by_status(BrickItem.STATUSES[0], 0)
 
     def show(self):
         plt.show()
@@ -244,6 +246,9 @@ class GalaxyView:
         self._update_by_status(status, 0)
 
     def _update_by_status(self, status: str, step: int):
+        if self.vm is None:
+            return
+
         max_x = self.vm.x.max() if self._pic is None else self._pic.shape[1]
         max_y = self.vm.y.max() if self._pic is None else self._pic.shape[0]
         self._ax_main.set_xlim([0, max_x])
@@ -251,7 +256,7 @@ class GalaxyView:
         self._pic = None
         try:
             self.vm, i, n_items = self._db_iterator.next_by_status(step, status, self._tree)
-            self._ax_main.set_title("%i/%i" % (i, n_items))
+            self._ax_main.set_title("%i/%i %s" % (i, n_items, self.vm.item._brick_name))
             self._show_picture()
         except IndexError:
             self._ax_main.clear()
