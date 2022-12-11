@@ -145,6 +145,7 @@ class GalaxyView:
 
         ax_ref = plt.subplot2grid((24, 7), (22, 3), rowspan=2, fig=self._fig)
         self.btn_ref = Button(ax_ref, "ref")
+        self.btn_ref.on_clicked(lambda _: self._on_ref_required())
 
         ax_good = plt.subplot2grid((24, 7), (22, 4), colspan=2, fig=self._fig)
         self.btn_good = Button(ax_good, "Set good")
@@ -255,6 +256,10 @@ class GalaxyView:
         except IndexError:
             self._ax_main.clear()
             self._ax_main.set_title("Empty")
+
+    def _on_ref_required(self):
+        ra, dec = self.vm.item._ra, self.vm.item._dec
+        print(f"https://www.legacysurvey.org/viewer/?ra={ra}&dec={dec}&zoom=12&layer=ls-dr9")
 
 
 class GalaxyViewViewModel:
