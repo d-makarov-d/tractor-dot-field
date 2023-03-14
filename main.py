@@ -56,6 +56,19 @@ def find_peaks(brick: Brick, points_x=300, points_y=300, sigma=3.0) -> list[Bric
     # REX type objects coordinates inside the brick
     x, y = brick.get_points(type=['REX', 'PSF'])
     ra, dec = brick.get_skycoords(type=['REX', 'PSF'])
+
+    def mag(flux):
+        return 22.5 - 2.5 * np.log10(flux)
+
+    def filter_mag(f_g, f_r, f_z):
+        return ( (26.5 > mag(f_g) > 18) and (25.5 > mag(f_r) > 18) ) \
+            or ( (26.5 > mag(f_g) > 18) and (25.5 > mag(f_z) > 17) ) \
+            or ( (25.5 > mag(f_r) > 18) and (25.5 > mag(f_z) > 17) )
+
+    x, y, ra, dec, flux_g, flux_r, flux_z = brick.get_properties(
+        lambda br: np.array([t in ('REX', 'PSF') and filter_mag(g, r, z) for t, g, r, z in zip(br._type, br._flux_g, br._flux_r, br._flux_z)]),
+        lambda br: [br._bx, br._by, br._ra, br._dec, br._flux_g, br._flux_r, br._flux_z]
+    )
     # make grid, on which we will search for peaks
     X, Y = np.meshgrid(np.linspace(min(x),max(x), points_x), np.linspace(min(y),max(y), points_y))
     # compute probability density estimates in the grid nodes
@@ -105,8 +118,7 @@ def find_peaks(brick: Brick, points_x=300, points_y=300, sigma=3.0) -> list[Bric
         ra_avg = np.mean(ra[mask_points_inside])
         dec_avg = np.mean(dec[mask_points_inside])
         peak = Peak(center_x, center_y, np.count_nonzero(mask_points_inside), area_s, ra_avg, dec_avg)
-        f_g, f_z, f_r = brick.get_flux(type=['REX', 'PSF'])
-        results.append(BrickResult(peak, x, y, Z, mask_points_inside, mask_meaningful, f_g[mask_points_inside], f_z[mask_points_inside], f_r[mask_points_inside]))
+        results.append(BrickResult(peak, x, y, Z, mask_points_inside, mask_meaningful, flux_g[mask_points_inside], flux_z[mask_points_inside], flux_r[mask_points_inside]))
 
     return results
 

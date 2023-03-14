@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import numpy as np
 from astropy.io.fits.hdu.table import FITS_rec
 from astropy.io.fits.hdu.base import Header
-from typing import Collection
+from typing import Collection, Callable
 
 """Class, holding data, read from brick"""
 class Brick:
@@ -22,6 +24,15 @@ class Brick:
         self._flux_ivar_g: np.ndarray = data['FLUX_IVAR_G']
         self._flux_ivar_r: np.ndarray = data['FLUX_IVAR_R']
         self._flux_ivar_z: np.ndarray = data['FLUX_IVAR_Z']
+
+    def get_properties(
+            self, filter: Callable[[Brick], np.ndarray],
+            extract_props: Callable[[Brick], list[np.ndarray]]
+    ) -> list[np.ndarray]:
+        mask = filter(self)
+
+        props = extract_props(self)
+        return [x[mask] for x in props]
 
     def get_points(self, type: Collection[str] = None) -> tuple[np.ndarray, np.ndarray]:
         """
