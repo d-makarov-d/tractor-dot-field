@@ -195,11 +195,8 @@ if __name__ == "__main__":
                     str(uuid.uuid4()), brick.url, brick_name,
                     peak.x, peak.y, peak.n_points, peak.area, peak.ra, peak.dec,
                     r.x, r.y, r.Z, r._mask_inside, r.mask_area,
-                    r.flux_g, r.flux_z, r.flux_r
+                    r.flux_g, r.flux_z, r.flux_r,
+                    brick.width, brick.height
                 ))
-            # plt.savefig(fname, bbox_inches='tight')
-            #fig = plt.figure()
-            #asyncio.run(display_on_fig(fig, tree, brick_name, results))
-            #plt.show()
 
     tree.close()

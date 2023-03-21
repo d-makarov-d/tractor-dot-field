@@ -18,6 +18,8 @@ class Brick:
         self._dec: np.ndarray = data['DEC']
         self._bx: np.ndarray = data['BX']
         self._by: np.ndarray = data['BY']
+        self.width = 3600
+        self.height = 3600
         self._flux_g: np.ndarray = data['FLUX_G']
         self._flux_r: np.ndarray = data['FLUX_R']
         self._flux_z: np.ndarray = data['FLUX_Z']

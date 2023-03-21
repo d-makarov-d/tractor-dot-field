@@ -102,21 +102,21 @@ class GalaxyView:
         show_keys = self._additional_plot.keys()
         show_values = self._additional_plot.values()
         show = self.vm.show if self.vm is not None else []
-        self.checkbox_btns = CheckButtons(ax_checkbox, show_values, [k in show for k in show_keys])
+        self.checkbox_btns = CheckButtons(ax_checkbox, list(show_values), [k in show for k in show_keys])
         self.checkbox_btns.on_clicked(self.redraw)
 
         ax_display = plt.subplot2grid((4, 3), (2, 2), fig=self._fig, aspect='equal')
         display_keys = list(self._display_variants.keys())
         display_values = self._display_variants.values()
         selection_main = self.vm.selection_main if self.vm is not None else "picture"
-        self.display_variants = RadioButtons(ax_display, display_values, display_keys.index(selection_main))
+        self.display_variants = RadioButtons(ax_display, list(display_values), display_keys.index(selection_main))
         self.display_variants.on_clicked(self.redraw)
 
         ax_radio = plt.subplot2grid((24, 6), (18, 0), colspan=2, rowspan=4, fig=self._fig, aspect='equal')
         ax_radio.axis('off')
         sample_keys = list(self._smples.keys())
         selection = sample_keys.index(self.vm.selection_sample) if self.vm is not None else None
-        self.radio_btns = RadioButtons(ax_radio, self._smples.values(), selection)
+        self.radio_btns = RadioButtons(ax_radio, list(self._smples.values()), selection)
         self.radio_btns.on_clicked(self._on_type_selected)
 
         ax_points_title = plt.subplot2grid((24, 6), (18, 2), colspan=8, fig=self._fig)
@@ -175,8 +175,8 @@ class GalaxyView:
                 child.remove()
             except NotImplementedError:
                 pass
-        max_x = self.vm.x.max() if self._pic is None else self._pic.shape[1]
-        max_y = self.vm.y.max() if self._pic is None else self._pic.shape[0]
+        max_x = self.vm.width if self._pic is None else self._pic.shape[1]
+        max_y = self.vm.height if self._pic is None else self._pic.shape[0]
         if self.display_variants.value_selected == self._display_variants["picture"]:
             if self._pic is None:
                 self._ax_main.text(0.5, 0.5, "%.2f" % self._pic_download, c='r')
@@ -289,6 +289,8 @@ class GalaxyViewViewModel:
         self.selection_sample = selection_sample
 
         self.x, self.y, self.Z = item._x, item._y, item._Z
+        self.width = item.width
+        self.height = item.height
         brick_name = item._brick_name
         self.item = item
 
