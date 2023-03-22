@@ -6,6 +6,8 @@ from functools import reduce
 from os import listdir
 import pathlib
 import time
+from astropy.io import fits
+from astropy.io.fits.hdu.table import FITS_rec
 
 from web import SiteTree
 from app_preferences import AppPreferences
@@ -65,7 +67,7 @@ def _download_urls(
     def make_task(url: str) -> Coroutine:
         name = _extract_name(url)
         file_name = f"{data_dir}/{name}"
-        return tree.download(url, file_name, lambda pr: update_progress(url, pr))
+        return _make_download_task(tree, url, file_name, update_progress)
 
     # Using progress keys to be sure _extract_name() result is not None
     tasks = [make_task(url) for url in progresses.keys()]
@@ -74,7 +76,10 @@ def _download_urls(
 
 
 def _extract_name(url: str) -> Union[str, None]:
-    res = re.sub(r'.*/\w+-', '', url)
+    match = re.match(r".+(north|south).+", url)
+    prefix = match.group(1) if match else ""
+
+    res = re.sub(r'.*/\w+-', f"{prefix}-", url)
     if len(res) == 0 or len(res) == len(url):
         return None
 
@@ -94,6 +99,22 @@ def _filter_urls(urls: list[str], prefs: AppPreferences):
 
 def _print_progress(pr: float):
     print(f"Download progress: %2.4f%%" % (pr * 100), end='\r')
+
+
+async def _make_download_task(
+        tree: SiteTree,
+        url: str,
+        file_name: str,
+        update_progress: Callable[[str, float], None] = None
+):
+    await tree.download(url, file_name, lambda pr: update_progress(url, pr))
+    with fits.open(file_name, mode='update') as hdul:
+        header = hdul[0].header
+        data = hdul[1].data
+        if not isinstance(data, FITS_rec):
+            raise ValueError(f"Fits file {file_name} must be a table")
+        header['url'] = url
+        hdul.flush()
 
 
 async def _process_urls(urls: Collection[str], prefs: AppPreferences, tree: SiteTree):
