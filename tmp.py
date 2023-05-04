@@ -6,7 +6,7 @@ from web import SiteTree
 import asyncio
 
 names = []
-with open('human_picked.dat') as f:
+with open('human-picked.dat') as f:
     for l in f.readlines()[2:]:
         columns = l.split('|')
         columns = list(map(lambda x: x.strip(), columns))
@@ -46,6 +46,6 @@ async def task(urls):
     tasks = [asyncio.create_task(task) for task in tasks]
     await asyncio.wait(tasks)
 
-urls = [form_path(x, 'north') for x in names]
+urls = [form_path(x, 'south') for x in names]
 
 asyncio.run(task(urls))

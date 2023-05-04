@@ -14,9 +14,9 @@ def _data_dir_stat(path: str):
     else:
         content = listdir(path)
         jpg_files = list(filter(lambda itm: itm.endswith(".jpg"), content))
-        fits_files = list(filter(lambda itm: itm.endswith(".fits"), content))
-        print("\tcached pictures: \t%d" % len(jpg_files))
-        print("\tfits files: \t\t%d" % len(fits_files))
+        fits_files = list(filter(lambda itm: itm.endswith(".fits.gz"), content))
+        print("\tcached pictures: %d" % len(jpg_files))
+        print("\tfits files: %d" % len(fits_files))
 
 
 def _db_stat(path_str: str):

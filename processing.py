@@ -171,6 +171,10 @@ async def display_on_fig(fig: Figure, tree: SiteTree, brick_name: str, res: Coll
     plt.title(f"{title_str}\n {info_str}")
 
 
+def is_fits(f_name: str) -> bool:
+    pass
+
+
 if __name__ == "__main__":
     dir = "data"
     fitses = [join(dir, f) for f in listdir(dir) if isfile(join(dir, f))]
@@ -187,8 +191,6 @@ if __name__ == "__main__":
         results = find_peaks(brick)
 
         if len(results) > 0:
-            fname = re.sub("\.fits$", ".png", brick_name)
-            fname = re.sub(r"^.+/", "out/", fname)
             for r in results:
                 peak = r.peak
                 db.save(BrickItem(

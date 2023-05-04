@@ -3,11 +3,12 @@ import re
 from typing import Union, Callable, Coroutine, Collection
 import asyncio
 from functools import reduce
-from os import listdir
+import os
 import pathlib
 import time
 from astropy.io import fits
 from astropy.io.fits.hdu.table import FITS_rec
+from zipfile import ZipFile
 
 from web import SiteTree
 from app_preferences import AppPreferences
@@ -91,8 +92,8 @@ def _filter_urls(urls: list[str], prefs: AppPreferences):
     if not pathlib.Path(prefs.data_dir).is_dir():
         return urls
 
-    content = listdir(prefs.data_dir)
-    existing = list(filter(lambda itm: itm.endswith(".fits"), content))
+    content = os.listdir(prefs.data_dir)
+    existing = [el[:-3] for el in filter(lambda itm: itm.endswith(".fits.gz"), content)]
 
     return [url for url in urls if _extract_name(url) not in existing]
 
@@ -107,14 +108,18 @@ async def _make_download_task(
         file_name: str,
         update_progress: Callable[[str, float], None] = None
 ):
-    await tree.download(url, file_name, lambda pr: update_progress(url, pr))
-    with fits.open(file_name, mode='update') as hdul:
+    tmp_file = f"{file_name}.tmp"
+    await tree.download(url, tmp_file, lambda pr: update_progress(url, pr))
+    with fits.open(tmp_file, mode='update') as hdul:
         header = hdul[0].header
         data = hdul[1].data
         if not isinstance(data, FITS_rec):
             raise ValueError(f"Fits file {file_name} must be a table")
         header['url'] = url
         hdul.flush()
+    with ZipFile(f"{file_name}.gz", "w") as f:
+        f.write(tmp_file)
+    os.remove(tmp_file)
 
 
 async def _process_urls(urls: Collection[str], prefs: AppPreferences, tree: SiteTree):
