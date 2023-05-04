@@ -9,6 +9,7 @@ import time
 from astropy.io import fits
 from astropy.io.fits.hdu.table import FITS_rec
 from zipfile import ZipFile
+from zipfile import ZIP_DEFLATED
 
 from web import SiteTree
 from app_preferences import AppPreferences
@@ -112,13 +113,13 @@ async def _make_download_task(
     await tree.download(url, tmp_file, lambda pr: update_progress(url, pr))
     with fits.open(tmp_file, mode='update') as hdul:
         header = hdul[0].header
-        data = hdul[1].data
+        """data = hdul[1].data
         if not isinstance(data, FITS_rec):
-            raise ValueError(f"Fits file {file_name} must be a table")
+            raise ValueError(f"Fits file {file_name} must be a table")"""
         header['url'] = url
         hdul.flush()
     with ZipFile(f"{file_name}.gz", "w") as f:
-        f.write(tmp_file)
+        f.write(tmp_file, compresslevel=9, compress_type=ZIP_DEFLATED)
     os.remove(tmp_file)
 
 
