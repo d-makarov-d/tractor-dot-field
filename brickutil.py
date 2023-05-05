@@ -5,12 +5,14 @@ from functools import reduce
 import status
 import scrapper
 import processing
+import galaxy_view
 from app_preferences import AppPreferences
 
 command_to_script = {
     "status": status.run,
     "scrapper": scrapper.run,
     "processing": processing.run,
+    "view": galaxy_view.run,
 }
 
 commands_str = reduce(lambda acc, v: '%s\n\t%s' % (acc, v), [cmd for cmd in command_to_script.keys()], '\t')

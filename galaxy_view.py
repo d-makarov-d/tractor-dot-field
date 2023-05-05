@@ -14,9 +14,11 @@ import matplotlib.image as mpimg
 import copy
 from PIL import Image
 from os import path
+import argparse
 
 from web import SiteTree
 from db.brick_item import BrickDB, BrickItem
+from app_preferences import AppPreferences
 
 callback_queue = queue.Queue()
 
@@ -28,13 +30,13 @@ def _from_flux(flux: np.ndarray) -> np.ndarray:
 class DbIterator:
     def __init__(self, db: BrickDB):
         self._status_map_indices = dict(map(lambda x: (x, 0), BrickItem.STATUSES))
-        self._update_statuses()
-
         self._db = db
+
+        self._update_statuses()
 
     def _update_statuses(self):
         self._status_to_id = dict(map(lambda x: (x, []), self._status_map_indices.keys()))
-        id_status = db.con.cursor().execute("SELECT id, status FROM peaks").fetchall()
+        id_status = self._db.con.cursor().execute("SELECT id, status FROM peaks").fetchall()
         for id, status in id_status:
             self._status_to_id[status] = self._status_to_id[status] + [id]
 
@@ -48,7 +50,7 @@ class DbIterator:
         else:
             idx = (self._status_map_indices[status] + step) % n_items
         self._status_map_indices[status] = idx
-        item = db.find(BrickItem, "id == '%s'" % self._status_to_id[status][idx])[0]
+        item = self._db.find(BrickItem, "id == '%s'" % self._status_to_id[status][idx])[0]
 
         return GalaxyViewViewModel(tree, item), idx, n_items
 
@@ -313,7 +315,7 @@ class GalaxyViewViewModel:
         return img
 
 
-if __name__ == "__main__":
+def _run():
     tree = SiteTree()
     db = BrickDB("main_db.sqlite")
     db_iterator = DbIterator(db)
@@ -327,3 +329,16 @@ if __name__ == "__main__":
             plt.pause(1e-5)
         except queue.Empty:  # raised when queue is empty
             plt.pause(1e-5)
+
+    tree.close()
+
+
+def run(args: list[str], name: str, prefs: AppPreferences):
+    parser = argparse.ArgumentParser(description="View processing results")
+    parser.usage = parser.format_usage().replace('usage: %s' % args[0], '%s %s' % (args[0], name))
+    parser.parse_args(args[2:])
+    _run()
+
+
+if __name__ == "__main__":
+    _run()
