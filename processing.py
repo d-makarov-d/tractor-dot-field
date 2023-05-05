@@ -12,11 +12,13 @@ from scipy.stats import gaussian_kde
 from scipy.ndimage import label
 from typing import Collection
 import uuid
+import argparse
 
 from brick import Brick
 from peak import Peak
 from web import SiteTree
 from db.brick_item import BrickDB, BrickItem
+from app_preferences import AppPreferences
 
 
 threshold = 5
@@ -35,6 +37,13 @@ class BrickResult:
         self.flux_r = flux_r
         self._mask_inside = mask_inside
         self.mask_area = mask_area
+
+
+def run(args: list[str], name: str, prefs: AppPreferences):
+    parser = argparse.ArgumentParser(description="Process fits files")
+    parser.usage = parser.format_usage().replace('usage: %s' % args[0], '%s %s' % (args[0], name))
+    parser.parse_args(args[2:])
+    _process_fitses(prefs)
 
 
 def decode_fits(file: str) -> Brick:
@@ -69,8 +78,10 @@ def find_peaks(brick: Brick, points_x=300, points_y=300, sigma=3.0) -> list[Bric
         lambda br: np.array([t in ('REX', 'PSF') and filter_mag(g, r, z) for t, g, r, z in zip(br._type, br._flux_g, br._flux_r, br._flux_z)]),
         lambda br: [br._bx, br._by, br._ra, br._dec, br._flux_g, br._flux_r, br._flux_z]
     )
+    if len(x) == 0:
+        return list()
     # make grid, on which we will search for peaks
-    X, Y = np.meshgrid(np.linspace(min(x),max(x), points_x), np.linspace(min(y),max(y), points_y))
+    X, Y = np.meshgrid(np.linspace(min(x), max(x), points_x), np.linspace(min(y), max(y), points_y))
     # compute probability density estimates in the grid nodes
     kernel = gaussian_kde(np.vstack([x, y]))
     positions = np.vstack([Y.ravel(), X.ravel()])
@@ -172,7 +183,34 @@ async def display_on_fig(fig: Figure, tree: SiteTree, brick_name: str, res: Coll
 
 
 def is_fits(f_name: str) -> bool:
-    pass
+    return f_name.endswith("fits.gz")
+
+
+def _process_fitses(prefs: AppPreferences):
+    dir = prefs.data_dir
+    fitses = [join(dir, f) for f in listdir(dir) if is_fits(join(dir, f))]
+    print(f"processing {len(fitses)}")
+    db = BrickDB("main_db.sqlite")
+
+    for i, brick_name in enumerate(fitses):
+        print(float(i)/len(fitses))
+        try:
+            brick = decode_fits(brick_name)
+        except Exception:
+            print(f"error decoding {brick_name}")
+            continue
+        results = find_peaks(brick)
+
+        if len(results) > 0:
+            for r in results:
+                peak = r.peak
+                db.save(BrickItem(
+                    str(uuid.uuid4()), brick.url, brick_name,
+                    peak.x, peak.y, peak.n_points, peak.area, peak.ra, peak.dec,
+                    r.x, r.y, r.Z, r._mask_inside, r.mask_area,
+                    r.flux_g, r.flux_z, r.flux_r,
+                    brick.width, brick.height
+                ))
 
 
 if __name__ == "__main__":

@@ -51,6 +51,8 @@ def run(args: list[str], name: str, prefs: AppPreferences):
         print(f"download tasks: {len(actual_urls)}")
         asyncio.run(_process_urls(actual_urls, prefs, tree))
 
+    tree.close()
+
 
 def _download_urls(
         urls: Collection[str], data_dir: str, tree: SiteTree,
@@ -113,9 +115,9 @@ async def _make_download_task(
     await tree.download(url, tmp_file, lambda pr: update_progress(url, pr))
     with fits.open(tmp_file, mode='update') as hdul:
         header = hdul[0].header
-        """data = hdul[1].data
+        data = hdul[1].data
         if not isinstance(data, FITS_rec):
-            raise ValueError(f"Fits file {file_name} must be a table")"""
+            raise ValueError(f"Fits file {file_name} must be a table")
         header['url'] = url
         hdul.flush()
     with ZipFile(f"{file_name}.gz", "w") as f:
