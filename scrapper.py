@@ -1,6 +1,6 @@
 import argparse
 import re
-from typing import Union, Callable, Coroutine, Collection
+from typing import Union, Callable, Collection
 import asyncio
 from functools import reduce
 import os
@@ -57,7 +57,7 @@ def run(args: list[str], name: str, prefs: AppPreferences):
 def _download_urls(
         urls: Collection[str], data_dir: str, tree: SiteTree,
         progress: Callable[[float], None] = None
-) -> list[Coroutine]:
+) -> list[asyncio.Task]:
     progresses = dict((url, 0.0) for url in urls if _extract_name(url) is not None)
     t = time.time()
 
@@ -68,10 +68,11 @@ def _download_urls(
             t = time.time()
             progress(sum(progresses.values()) / len(progresses))
 
-    def make_task(url: str) -> Coroutine:
+    def make_task(url: str) -> asyncio.Task:
         name = _extract_name(url)
         file_name = f"{data_dir}/{name}"
-        return _make_download_task(tree, url, file_name, update_progress)
+        coro = _make_download_task(tree, url, file_name, update_progress)
+        return asyncio.Task(coro)
 
     # Using progress keys to be sure _extract_name() result is not None
     tasks = [make_task(url) for url in progresses.keys()]
