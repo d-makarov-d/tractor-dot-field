@@ -15,6 +15,7 @@ import copy
 from PIL import Image
 from os import path
 import argparse
+from threading import Thread
 
 from web import SiteTree
 from db.brick_item import BrickDB, BrickItem
@@ -227,8 +228,7 @@ class GalaxyView:
             if self._pic is not None and self.vm is curr_vm:
                 callback_queue.put(lambda: self.redraw())
 
-        picture_task = pool.submit(lambda: asyncio.run(task()))
-        pool.submit(picture_task)
+        pool.submit(lambda: asyncio.run(task()))
 
     def _on_type_selected(self, _):
         status = list(self._smples.keys())[list(self._smples.values()).index(self.radio_btns.value_selected)]
@@ -319,7 +319,6 @@ def _run():
     tree = SiteTree()
     db = BrickDB("main_db.sqlite")
     db_iterator = DbIterator(db)
-    unique_names = db.con.cursor().execute("SELECT DISTINCT brick_name FROM peaks").fetchall()
 
     gv = GalaxyView(db_iterator, tree)
     while True:
