@@ -15,7 +15,6 @@ import copy
 from PIL import Image
 from os import path
 import argparse
-from threading import Thread
 
 from web import SiteTree
 from db.brick_item import BrickDB, BrickItem
@@ -315,8 +314,8 @@ class GalaxyViewViewModel:
         return img
 
 
-def _run():
-    tree = SiteTree()
+def _run(proxy=None):
+    tree = SiteTree(proxy=proxy)
     db = BrickDB("main_db.sqlite")
     db_iterator = DbIterator(db)
 
@@ -335,8 +334,14 @@ def _run():
 def run(args: list[str], name: str, prefs: AppPreferences):
     parser = argparse.ArgumentParser(description="View processing results")
     parser.usage = parser.format_usage().replace('usage: %s' % args[0], '%s %s' % (args[0], name))
-    parser.parse_args(args[2:])
-    _run()
+
+    parser.add_argument("--proxy", type=str,
+                        default=None, required=False,
+                        help="Proxy")
+
+    settings = parser.parse_args(args[2:])
+    print(settings.proxy)
+    _run(proxy=settings.proxy)
 
 
 if __name__ == "__main__":
