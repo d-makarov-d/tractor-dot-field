@@ -21,7 +21,7 @@ from db.brick_item import BrickDB, BrickItem
 from app_preferences import AppPreferences
 
 
-threshold = 5
+threshold = 7
 
 
 class BrickResult:
@@ -96,7 +96,7 @@ def find_peaks(brick: Brick, points_x=300, points_y=300, sigma=3.0) -> list[Bric
 
     mask_meaningful = is_meaningful(Z)
     # allow all types of connections
-    structure = np.ones((3,3))
+    structure = np.ones((3, 3))
     labeled, n_components = label(mask_meaningful, structure)
 
     results = list()

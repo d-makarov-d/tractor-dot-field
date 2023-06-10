@@ -6,6 +6,7 @@ import status
 import scrapper
 import processing
 import galaxy_view
+import fits_to_db
 from app_preferences import AppPreferences
 
 command_to_script = {
@@ -13,6 +14,7 @@ command_to_script = {
     "scrapper": scrapper.run,
     "processing": processing.run,
     "view": galaxy_view.run,
+    "fits_to_db": fits_to_db.run
 }
 
 commands_str = reduce(lambda acc, v: '%s\n\t%s' % (acc, v), [cmd for cmd in command_to_script.keys()], '\t')
