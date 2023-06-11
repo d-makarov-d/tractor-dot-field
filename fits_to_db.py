@@ -112,7 +112,7 @@ class TypeDescr:
 
     def _adapt_np_types(self, v):
         if isinstance(v, np.ndarray):
-            return str(v)
+            return str(list(v)).replace("  ", ",")
         elif self.var_type == "REAL":
             return float(v)
         elif self.var_type == "INTEGER":
